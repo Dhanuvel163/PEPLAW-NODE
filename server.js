@@ -35,7 +35,7 @@ const lawyerRoutes = require("./routes/lawyeraccount");
 
 app.use("/api/useraccounts", userRoutes);
 app.use("/api/lawyeraccounts", lawyerRoutes);
-
-app.listen(config.port || 3000, (err) => {
-  console.log("Listening at port" + config.port);
+const port = process.env.PORT || 3000;
+app.listen(port, (err) => {
+  console.log("Listening at port" + port);
 });
