@@ -10,6 +10,9 @@ const UserSchema = new Schema({
   password: String,
   picture: String,
   mobile:String,
+  country:String,
+  city:String,
+
   address: {
     addr1: String,
     addr2: String,

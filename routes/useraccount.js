@@ -3,6 +3,8 @@ const jwt = require('jsonwebtoken');
 
 const User = require('../models/user');
 const Case = require('../models/case');
+const Lawyer = require('../models/lawyer');
+
 const config = require('../config');
 const checkJWT = require('../middlewares/check-jwtuser');
 
@@ -95,8 +97,9 @@ router.route('/profile')
 
       if (req.body.name) user.name = req.body.name;
       if (req.body.email) user.email = req.body.email;
-      if (req.body.password) user.password = req.body.password;
       if (req.body.mobile) user.mobile = req.body.mobile;
+      if (req.body.country) user.country = req.body.country;
+      if (req.body.city) user.city = req.body.city;
 
       user.save();
       res.json({
@@ -138,7 +141,6 @@ router.route('/profile')
 
   router.get('/cases', checkJWT, (req, res, next) => {
     Case.find({ User: req.decoded.user._id })
-      // .populate('User')
       .exec((err, cases) => {
         if (err) {
           res.json({
@@ -199,4 +201,22 @@ router.route('/profile')
   //     });
   // });
 
+  router.get('/alllawyers', checkJWT, (req, res, next) => {
+    Lawyer.find()
+      .exec((err, lawyers) => {
+        if (err) {
+          res.json({
+            success: false,
+            message: "Couldn't find your lawyers"
+          });
+        } else {
+          res.json({
+            success: true,
+            message: 'Found your lawyers',
+            lawyers: lawyers
+          });
+        }
+      });
+  });
+  
 module.exports = router;

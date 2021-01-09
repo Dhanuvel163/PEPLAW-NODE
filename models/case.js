@@ -15,6 +15,7 @@ const CaseSchema = new Schema({
   probationtime:String,
   drivingrestrictions:String,
   jail_penitentiary:String,
+  
   lawyerRequests:[{type:Schema.Types.ObjectId,ref:'Lawyer'}],
   userRequests:[{type:Schema.Types.ObjectId,ref:'Lawyer'}],
   locked:{type:Boolean,default:false},

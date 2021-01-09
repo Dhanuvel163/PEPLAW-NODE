@@ -92,11 +92,11 @@ router.route('/profile')
   .post(checkJWT, (req, res, next) => {
     Lawyer.findOne({ _id: req.decoded.lawyer._id }, (err, lawyer) => {
       if (err) return next(err);
-      console.log(req.body)
       if (req.body.name) lawyer.name = req.body.name;
       if (req.body.email) lawyer.email = req.body.email;
-      if (req.body.password) lawyer.password = req.body.password;
       if (req.body.mobile) lawyer.mobile = req.body.mobile;
+      if (req.body.country) lawyer.country = req.body.country;
+      if (req.body.city) lawyer.city = req.body.city;
       try{
         lawyer.save();
       console.log(lawyer)
@@ -166,7 +166,7 @@ router.route('/profile')
 
   router.get('/allcases', checkJWT, (req, res, next) => {
     Case.find({ locked:false})
-      // .populate('User')
+      .populate('User','name email mobile')
       .exec((err, cases) => {
         if (err) {
           res.json({
