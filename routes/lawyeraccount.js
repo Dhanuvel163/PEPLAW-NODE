@@ -15,7 +15,7 @@ router.post('/signup', (req, res, next) => {
  lawyer.mobile = req.body.mobile;
  lawyer.picture = lawyer.gravatar();
 
- Lawyer.findOne({ email: req.body.email }, (err, existingUser) => {
+ Lawyer.findOne({ email: req.body.email },{password:0}, (err, existingUser) => {
   if (existingUser) {
     res.json({
       success: false,
@@ -61,6 +61,7 @@ router.post('/login', (req, res, next) => {
           message: 'Authentication failed. Wrong password'
         });
       } else {
+        delete lawyer['password']
         var token = jwt.sign({
             lawyer: lawyer,
             islawyer:true
@@ -81,7 +82,7 @@ router.post('/login', (req, res, next) => {
 
 router.route('/profile')
   .get(checkJWT, (req, res, next) => {
-    Lawyer.findOne({ _id: req.decoded.lawyer._id }, (err, lawyer) => {
+    Lawyer.findOne({ _id: req.decoded.lawyer._id },{password:0}, (err, lawyer) => {
       res.json({
         success: true,
         lawyer: lawyer,
@@ -90,16 +91,20 @@ router.route('/profile')
     });
   })
   .post(checkJWT, (req, res, next) => {
-    Lawyer.findOne({ _id: req.decoded.lawyer._id }, (err, lawyer) => {
+    Lawyer.findOne({ _id: req.decoded.lawyer._id },{password:0}, (err, lawyer) => {
       if (err) return next(err);
       if (req.body.name) lawyer.name = req.body.name;
       if (req.body.email) lawyer.email = req.body.email;
       if (req.body.mobile) lawyer.mobile = req.body.mobile;
       if (req.body.country) lawyer.country = req.body.country;
       if (req.body.city) lawyer.city = req.body.city;
+
+      if (req.body.addr1) lawyer.address.addr1 = req.body.addr1;
+      if (req.body.addr2) lawyer.address.addr2 = req.body.addr2;
+      if (req.body.state) lawyer.address.state = req.body.state;
+      if (req.body.postalCode) lawyer.address.postalCode = req.body.postalCode;
       try{
         lawyer.save();
-      console.log(lawyer)
       }
       catch(e){
         console.log(e)
@@ -111,43 +116,10 @@ router.route('/profile')
     });
   });
 
-  // router.route('/address')
-  // .get(checkJWT, (req, res, next) => {
-  //   Lawyer.findOne({ _id: req.decoded.lawyer._id }, (err, lawyer) => {
-  //     res.json({
-  //       success: true,
-  //       address: lawyer.address,
-  //       message: "Successful"
-  //     });
-  //   });
-  // })
-  // .post(checkJWT, (req, res, next) => {
-  //   Lawyer.findOne({ _id: req.decoded.lawyer._id }, (err, lawyer) => {
-  //     if (err) return next(err);
-
-  //     if (req.body.addr1) lawyer.address.addr1 = req.body.addr1;
-  //     if (req.body.addr2) lawyer.address.addr2 = req.body.addr2;
-  //     if (req.body.city) lawyer.address.city = req.body.city;
-  //     if (req.body.state) lawyer.address.state = req.body.state;
-  //     if (req.body.country) lawyer.address.country = req.body.country;
-  //     if (req.body.postalCode) lawyer.address.postalCode = req.body.postalCode;
-  //    try{
-  //     lawyer.save();
-  //    }
-  //    catch(e){
-  //      console.log(e)
-  //    }
-  //     res.json({
-  //       success: true,
-  //       message: 'Successfully edited your address'
-  //     });
-  //   });
-  // });
-
 
   router.get('/cases', checkJWT, (req, res, next) => {
     Case.find({ lockedlawyer: req.decoded.lawyer._id })
-      // .populate('User')
+      .populate('User','mail name mobile')
       .exec((err, cases) => {
         if (err) {
           res.json({
@@ -193,11 +165,9 @@ router.route('/profile')
             message: "Couldn't find your Cases"
           });
         }else{
-          console.log(cases)
           cases.lockedlawyer=req.decoded.lawyer._id ;
           cases.locked=true;
           cases.save();
-          console.log(cases)
           res.json({
             success: true,
             message: "Updated Successfully !!"

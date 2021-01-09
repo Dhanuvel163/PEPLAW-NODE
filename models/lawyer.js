@@ -16,9 +16,7 @@ const LawyerSchema = new Schema({
   address: {
     addr1: String,
     addr2: String,
-    city: String,
     state: String,
-    country: String,
     postalCode: String
   },
   created: { type: Date, default: Date.now },
