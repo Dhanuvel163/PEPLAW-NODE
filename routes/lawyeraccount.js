@@ -136,7 +136,7 @@ router.route('/profile')
       });
   });
 
-  router.get('/allcases', checkJWT, (req, res, next) => {
+  router.get('/allcases', (req, res, next) => {
     Case.find({ locked:false})
       .populate('User','name email mobile')
       .exec((err, cases) => {
