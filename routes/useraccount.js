@@ -111,7 +111,8 @@ router.route('/profile')
       user.save();
       res.json({
         success: true,
-        message: 'Successfully edited your profile'
+        message: 'Successfully edited your profile',
+        profile:user
       });
     });
   });
@@ -144,19 +145,35 @@ router.route('/profile')
     newcase.amendedcharge = req.body.acharge;
     newcase.description = req.body.desc;
 
-    try{
-      newcase.save()
-      res.json({
-        success: true,
-        message: 'Added succesfully',
-      });
-    }catch(e){
-      console.log(e)
-      res.json({
-        success: false,
-        message: e.message,
-      });      
-    }
+    Case.findOne({ dispositioncode: req.body.dcode }, (err, findcase) => {
+      if (err) throw err;
+      if (!findcase) {
+        try{
+          newcase.save()
+          res.json({
+            success: true,
+            message: 'Added succesfully',
+            case:newcase
+          });
+        }catch(e){
+          console.log(e)
+          res.json({
+            success: false,
+            message: e.message,
+          });      
+        }
+      } else {
+        res.json({
+          success: false,
+          message: 'Case with disposition code already exist'
+        });
+      }
+
+  });
+
+
+
+
   });
 
   // router.get('/cases/:id', checkJWT, (req, res, next) => {

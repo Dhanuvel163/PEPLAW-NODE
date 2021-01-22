@@ -113,7 +113,8 @@ router.route('/profile')
       }
       res.json({
         success: true,
-        message: 'Successfully edited your profile'
+        message: 'Successfully edited your profile',
+        profile:lawyer
       });
     });
   });
