@@ -173,7 +173,8 @@ router.route('/profile')
           cases.save();
           res.json({
             success: true,
-            message: "Updated Successfully !!"
+            message: "Updated Successfully !!",
+            case:cases
           });
         }
         
