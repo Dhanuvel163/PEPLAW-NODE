@@ -158,7 +158,7 @@ router.route('/profile')
   });
 
   router.get('/rejectedcases', checkJWT, (req, res, next) => {
-    Case.find({ locked: true })
+    Case.find({ locked: true,lawyerRequests: req.decoded.lawyer._id })
       .populate('User','email name mobile')
       .exec((err, cases) => {
         if (err) {
