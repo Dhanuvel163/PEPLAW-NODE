@@ -119,6 +119,24 @@ router.route('/profile')
     });
   });
 
+    router.get('/cases', checkJWT, (req, res, next) => {
+    Case.find({lawyerRequests: req.decoded.lawyer._id})
+      .populate('User','email name mobile')
+      .exec((err, cases) => {
+        if (err) {
+          res.json({
+            success: false,
+            message: "Couldn't find your Cases"
+          });
+        } else {
+          res.json({
+            success: true,
+            message: 'Found your Cases',
+            cases: cases
+          });
+        }
+      });
+  });
 
   router.get('/acceptedcases', checkJWT, (req, res, next) => {
     Case.find({ lockedlawyer: req.decoded.lawyer._id })
