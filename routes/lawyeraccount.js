@@ -159,6 +159,26 @@ router.route('/profile')
       });
   });
 
+  router.get('/pendingcases', checkJWT, (req, res, next) => {
+    Case.find({ locked: false ,lawyerRequests: req.decoded.lawyer._id})
+      .populate('User','email name mobile')
+      .exec((err, cases) => {
+        if (err) {
+          res.json({
+            success: false,
+            message: "Couldn't find your Cases"
+          });
+        } else {
+          cases=cases.filter((b)=>b.lockedlawyer!=req.decoded.lawyer._id)
+          res.json({
+            success: true,
+            message: 'Found your Cases',
+            cases: cases
+          });
+        }
+      });
+  });
+
   router.post('/apply/:id',checkJWT, (req, res, next) => {
     Case.findOne({ _id: req.params.id })
       .exec((err, cases) => {
