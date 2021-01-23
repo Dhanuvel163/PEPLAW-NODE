@@ -137,6 +137,7 @@ router.route('/profile')
 
   router.get('/pendingcases', checkJWT, (req, res, next) => {
     Case.find({ User: req.decoded.user._id,locked:false })
+    .populate('lawyerRequests','email name mobile')
       .exec((err, cases) => {
         if (err) {
           res.json({
