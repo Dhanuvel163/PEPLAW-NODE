@@ -120,7 +120,7 @@ router.route('/profile')
   });
 
 
-  router.get('/cases', checkJWT, (req, res, next) => {
+  router.get('/acceptedcases', checkJWT, (req, res, next) => {
     Case.find({ lockedlawyer: req.decoded.lawyer._id })
       .populate('User','email name mobile')
       .exec((err, cases) => {
@@ -138,6 +138,50 @@ router.route('/profile')
         }
       });
   });
+
+  router.get('/rejectedcases', checkJWT, (req, res, next) => {
+    Case.find({ locked: true })
+      .populate('User','email name mobile')
+      .exec((err, cases) => {
+        if (err) {
+          res.json({
+            success: false,
+            message: "Couldn't find your Cases"
+          });
+        } else {
+          cases=cases.filter((b)=>b.lockedlawyer!=req.decoded.lawyer._id)
+          res.json({
+            success: true,
+            message: 'Found your Cases',
+            cases: cases
+          });
+        }
+      });
+  });
+
+  router.post('/apply/:id',checkJWT, (req, res, next) => {
+    Case.findOne({ _id: req.params.id })
+      .exec((err, cases) => {
+        if (err) {
+          console.log(err)
+          res.json({
+            success: false,
+            message: "Couldn't find the Cases"
+          });
+        }else{
+          // cases.lockedlawyer=req.decoded.lawyer._id ;
+          // cases.locked=true;
+          cases.lawyerRequests=cases.lawyerRequests.concat(req.decoded.lawyer._id) ;
+          cases.save();
+          res.json({
+            success: true,
+            message: "Applied Successfully !!",
+            case:cases
+          });
+        }
+        
+      })
+  })
 
   router.get('/allcases', (req, res, next) => {
     Case.find({ locked:false})
@@ -157,29 +201,6 @@ router.route('/profile')
         }
       });
   });
-
-  router.post('/accept/:id',checkJWT, (req, res, next) => {
-    Case.findOne({ _id: req.params.id })
-      .exec((err, cases) => {
-        if (err) {
-          console.log(err)
-          res.json({
-            success: false,
-            message: "Couldn't find your Cases"
-          });
-        }else{
-          cases.lockedlawyer=req.decoded.lawyer._id ;
-          cases.locked=true;
-          cases.save();
-          res.json({
-            success: true,
-            message: "Updated Successfully !!",
-            case:cases
-          });
-        }
-        
-      })
-  })
   
   // router.get('/cases/:id', checkJWT, (req, res, next) => {
   //   Case.findOne({ _id: req.params.id })
