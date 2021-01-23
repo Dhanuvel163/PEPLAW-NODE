@@ -122,7 +122,7 @@ router.route('/profile')
 
   router.get('/cases', checkJWT, (req, res, next) => {
     Case.find({ lockedlawyer: req.decoded.lawyer._id })
-      .populate('User','mail name mobile')
+      .populate('User','email name mobile')
       .exec((err, cases) => {
         if (err) {
           res.json({
