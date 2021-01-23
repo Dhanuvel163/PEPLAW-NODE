@@ -175,6 +175,44 @@ router.route('/profile')
       });
   });
 
+  router.post('/accept/:case/:lawyer', checkJWT, (req, res, next) => {
+    Case.find({locked:false,_id:req.params.case,User: req.decoded.user._id})
+    .populate('lawyerRequests','email name mobile')
+      .exec((err, cases) => {
+        if (err) {
+          res.json({
+            success: false,
+            message: "You are not authorized to update or case is already accepted"
+          });
+        } else {
+          cases.lockedlawyer = req.params.lawyer
+          cases.save()
+
+          Lawyer.findById(req.params.lawyer)
+          .exec((err,lawyer)=>{
+            if(err){
+              res.json({
+                success: false,
+                message: "Something Went Wrong"
+              }); 
+            }else{
+              cases.lockedlawyer = {
+                name :lawyer.name,
+                email :lawyer.email,
+                mobile :lawyer.mobile
+              }
+            }
+          })
+          
+          res.json({
+            success: true,
+            message: 'Accepted',
+            cases: cases
+          });
+        }
+      });
+  });
+
 
   router.post('/cases', checkJWT, (req, res, next) => {
     let newcase = new Case();
