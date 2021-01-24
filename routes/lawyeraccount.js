@@ -213,8 +213,7 @@ router.route('/profile')
           if(cases.lawyerRequests.includes(req.decoded.lawyer._id)){
             res.json({
               success: false,
-              message: "You Have Already Applied !!",
-              case:cases
+              message: "You Have Already Applied !!"
             });
           }else{
             cases.lawyerRequests=cases.lawyerRequests.concat(req.decoded.lawyer._id) ;
