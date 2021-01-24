@@ -209,13 +209,24 @@ router.route('/profile')
         }else{
           // cases.lockedlawyer=req.decoded.lawyer._id ;
           // cases.locked=true;
-          cases.lawyerRequests=cases.lawyerRequests.concat(req.decoded.lawyer._id) ;
-          cases.save();
-          res.json({
-            success: true,
-            message: "Applied Successfully !!",
-            case:cases
-          });
+
+          if(cases.lawyerRequests.includes(req.decoded.lawyer._id)){
+            res.json({
+              success: false,
+              message: "You Have Already Applied !!",
+              case:cases
+            });
+          }else{
+            cases.lawyerRequests=cases.lawyerRequests.concat(req.decoded.lawyer._id) ;
+            cases.save();
+            res.json({
+              success: true,
+              message: "Applied Successfully !!",
+              case:cases
+            });
+          }
+
+
         }
         
       })
