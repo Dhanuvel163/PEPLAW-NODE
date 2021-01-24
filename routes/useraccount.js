@@ -186,6 +186,7 @@ router.route('/profile')
           });
         } else {
           cases.lockedlawyer = req.params.lawyer
+          cases.locked = true
           cases.save()
 
           Lawyer.findById(req.params.lawyer)
