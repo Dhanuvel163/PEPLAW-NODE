@@ -176,7 +176,7 @@ router.route('/profile')
   });
 
   router.post('/accept/:case/:lawyer', checkJWT, (req, res, next) => {
-    Case.find({locked:false,_id:req.params.case,User: req.decoded.user._id})
+    Case.findOne({locked:false,_id:req.params.case,User: req.decoded.user._id})
     .populate('lawyerRequests','email name mobile')
       .exec((err, cases) => {
         if (err) {
