@@ -141,7 +141,7 @@ router.route('/profile')
 
   router.get('/acceptedcases', checkJWT, (req, res, next) => {
     Case.find({ lockedlawyer: req.decoded.lawyer._id })
-      .populate('User','email name mobile')
+      .populate('User','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
           res.json({
@@ -160,7 +160,7 @@ router.route('/profile')
 
   router.get('/rejectedcases', checkJWT, (req, res, next) => {
     Case.find({ locked: true,lawyerRequests: req.decoded.lawyer._id })
-      .populate('User','email name mobile')
+      .populate('User','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
           res.json({
@@ -180,7 +180,7 @@ router.route('/profile')
 
   router.get('/pendingcases', checkJWT, (req, res, next) => {
     Case.find({ locked: false ,lawyerRequests: req.decoded.lawyer._id})
-      .populate('User','email name mobile')
+      .populate('User','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
           res.json({
@@ -234,7 +234,7 @@ router.route('/profile')
 
   router.get('/allcases', (req, res, next) => {
     Case.find({ locked:false})
-      .populate('User','name email mobile')
+      .populate('User','name email mobile _id')
       .exec((err, cases) => {
         if (err) {
           res.json({
