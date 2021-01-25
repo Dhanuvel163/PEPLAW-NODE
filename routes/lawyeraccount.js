@@ -1,6 +1,7 @@
 const router = require('express').Router();
 const jwt = require('jsonwebtoken');
 
+const User = require('../models/user');
 const Lawyer = require('../models/lawyer');
 const Case = require('../models/case');
 const config = require('../config');
@@ -269,5 +270,15 @@ router.route('/profile')
   //     });
   // });
 
+router.route('/userprofiledetail/:user')
+  .get(checkJWT, (req, res, next) => {
+    User.findOne({ _id: req.params.user },{password:0}, (err, user) => {
+      res.json({
+        success: true,
+        user,
+        message: "Successful"
+      });
+    });
+  })
 
 module.exports = router;

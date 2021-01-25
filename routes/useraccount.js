@@ -292,4 +292,15 @@ router.route('/profile')
       });
   });
   
+router.route('/lawyerprofiledetail/:lawyer')
+  .get(checkJWT, (req, res, next) => {
+    Lawyer.findOne({ _id: req.params.lawyer },{password:0}, (err, lawyer) => {
+      res.json({
+        success: true,
+        lawyer,
+        message: "Successful"
+      });
+    });
+  })
+
 module.exports = router;
