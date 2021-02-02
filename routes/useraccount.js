@@ -7,7 +7,40 @@ const Lawyer = require('../models/lawyer');
 
 const config = require('../config');
 const checkJWT = require('../middlewares/check-jwtuser');
+const firebaseAuthCheck = require('../firebase/authcheck')
 
+router.post('/createUser',firebaseAuthCheck.authUser, (req, res, next) => {
+ let user = new User();
+ console.log(req.body)
+ user.name = req.body.name;
+ user.email = req.body.email;
+ user.password = req.body.password;
+ user.firebaseId = req.uid
+ if(req.body.mobile){
+   user.mobile = req.body.mobile ;
+ }
+ if(req.body.picture){
+   user.picture = req.body.picture ;
+ }else{
+   user.picture = user.gravatar();
+ }
+ User.findOne({ email: req.body.email },{password:0}, (err, existingUser) => {
+  if (existingUser) {
+    res.json({
+      success: false,
+      message: 'Email already exists'
+    });
+
+  } else {
+    res.json({
+      success: true,
+      message: 'Created user',
+      user
+    });
+  }
+
+ });
+});
 
 router.post('/signup', (req, res, next) => {
  let user = new User();
@@ -153,7 +186,7 @@ router.route('/profile')
           });
         }
       });
-  });
+  }); 
 
   router.get('/acceptedcases', checkJWT, (req, res, next) => {
     Case.find({ locked:true })

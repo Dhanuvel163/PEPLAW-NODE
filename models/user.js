@@ -12,6 +12,7 @@ const UserSchema = new Schema({
   mobile:String,
   country:String,
   city:String,
+  firebaseId:String,
 
   address: {
     addr1: String,
