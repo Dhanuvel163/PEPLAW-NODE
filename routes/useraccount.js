@@ -11,14 +11,13 @@ const firebaseAuthCheck = require('../firebase/authcheck')
 
 router.post('/createUser',firebaseAuthCheck.authUser, (req, res, next) => {
  let user = new User();
- console.log(req.body)
  user.name = req.body.name;
  user.email = req.body.email;
  user.password = req.body.password;
- user.firebaseId = req.uid
- if(req.body.mobile){
-   user.mobile = req.body.mobile ;
- }
+ user.firebaseId = req.uid.uid
+//  if(req.body.mobile){
+//    user.mobile = req.body.mobile ;
+//  }
  if(req.body.picture){
    user.picture = req.body.picture ;
  }else{
@@ -32,90 +31,16 @@ router.post('/createUser',firebaseAuthCheck.authUser, (req, res, next) => {
     });
 
   } else {
+    user.save()
     res.json({
       success: true,
       message: 'Created user',
       user
     });
   }
-
  });
 });
 
-router.post('/signup', (req, res, next) => {
- let user = new User();
- user.name = req.body.name;
- user.email = req.body.email;
- user.password = req.body.password;
- user.mobile = req.body.mobile;
- user.picture = user.gravatar();
-
- User.findOne({ email: req.body.email },{password:0}, (err, existingUser) => {
-  if (existingUser) {
-    res.json({
-      success: false,
-      message: 'Account with that email is already exist'
-    });
-
-  } else {
-    user.save();
-
-    var token = jwt.sign({
-      user: user,
-      islawyer:false
-    }, config.secret, {
-      expiresIn: '7d'
-    });
-
-    res.json({
-      success: true,
-      message: 'Enjoy your token',
-      token: token,
-      name:user.name
-    });
-  }
-
- });
-});
-
-router.post('/login', (req, res, next) => {
-
-  User.findOne({ email: req.body.email }, (err, user) => {
-    if (err) throw err;
-
-    if (!user) {
-      res.json({
-        success: false,
-        message: 'Authenticated failed, User not found'
-      });
-    } else if (user) {
-
-      var validPassword = user.comparePassword(req.body.password);
-      if (!validPassword) {
-        res.json({
-          success: false,
-          message: 'Authentication failed. Wrong password'
-        });
-      } else {
-        delete user['password']
-        var token = jwt.sign({
-          user: user,
-          islawyer:false
-        }, config.secret, {
-          expiresIn: '7d'
-        });
-
-        res.json({
-          success: true,
-          mesage: "Enjoy your token",
-          token: token,
-          name:user.name
-        });
-      }
-    }
-
-  });
-});
 
 router.route('/profile')
   .get(checkJWT, (req, res, next) => {

@@ -6,81 +6,39 @@ const Lawyer = require('../models/lawyer');
 const Case = require('../models/case');
 const config = require('../config');
 const checkJWT = require('../middlewares/check-jwtlawyer');
+const firebaseAuthCheck = require('../firebase/authcheck')
 
-
-router.post('/signup', (req, res, next) => {
+router.post('/createLawyer',firebaseAuthCheck.authLawyer, (req, res, next) => {
  let lawyer = new Lawyer();
  lawyer.name = req.body.name;
  lawyer.email = req.body.email;
  lawyer.password = req.body.password;
- lawyer.mobile = req.body.mobile;
- lawyer.picture = lawyer.gravatar();
 
- Lawyer.findOne({ email: req.body.email },{password:0}, (err, existingUser) => {
-  if (existingUser) {
+ lawyer.firebaseId = req.uid.uid
+//  if(req.body.mobile){
+//    user.mobile = req.body.mobile ;
+//  }
+ if(req.body.picture){
+   lawyer.picture = req.body.picture ;
+ }else{
+   lawyer.picture = lawyer.gravatar();
+ }
+ Lawyer.findOne({ email: req.body.email },{password:0}, (err, existingLawyer) => {
+  if (existingLawyer) {
     res.json({
       success: false,
-      message: 'Account with that email is already exist'
+      message: 'Email already exists'
     });
 
   } else {
-    lawyer.save();
-
-    var token = jwt.sign({
-        lawyer: lawyer,
-        islawyer:true
-    }, config.secret, {
-      expiresIn: '7d'
-    });
-
+    lawyer.save()
     res.json({
       success: true,
-      message: 'Enjoy your token',
-      token: token,
-      name:lawyer.name
+      message: 'Created user',
+      lawyer
     });
   }
-
  });
-});
-
-router.post('/login', (req, res, next) => {
-
-    Lawyer.findOne({ email: req.body.email }, (err, lawyer) => {
-    if (err) throw err;
-
-    if (!lawyer) {
-      res.json({
-        success: false,
-        message: 'Authenticated failed, User not found'
-      });
-    } else if (lawyer) {
-
-      var validPassword = lawyer.comparePassword(req.body.password);
-      if (!validPassword) {
-        res.json({
-          success: false,
-          message: 'Authentication failed. Wrong password'
-        });
-      } else {
-        delete lawyer['password']
-        var token = jwt.sign({
-            lawyer: lawyer,
-            islawyer:true
-        }, config.secret, {
-          expiresIn: '7d'
-        });
-
-        res.json({
-          success: true,
-          mesage: "Enjoy your token",
-          token: token,
-          name:lawyer.name
-        });
-      }
-    }
-
-  });
 });
 
 router.route('/profile')
