@@ -5,7 +5,6 @@ const User = require('../models/user');
 const Lawyer = require('../models/lawyer');
 const Case = require('../models/case');
 const config = require('../config');
-const checkJWT = require('../middlewares/check-jwtlawyer');
 const firebaseAuthCheck = require('../firebase/authcheck')
 
 router.post('/createLawyer',firebaseAuthCheck.authLawyer, (req, res, next) => {
@@ -42,8 +41,8 @@ router.post('/createLawyer',firebaseAuthCheck.authLawyer, (req, res, next) => {
 });
 
 router.route('/profile')
-  .get(checkJWT, (req, res, next) => {
-    Lawyer.findOne({ _id: req.decoded.lawyer._id },{password:0}, (err, lawyer) => {
+  .get(firebaseAuthCheck.authLawyer, (req, res, next) => {
+    Lawyer.findOne({ email: req.uid.email },{password:0}, (err, lawyer) => {
       res.json({
         success: true,
         lawyer: lawyer,
@@ -51,8 +50,8 @@ router.route('/profile')
       });
     });
   })
-  .post(checkJWT, (req, res, next) => {
-    Lawyer.findOne({ _id: req.decoded.lawyer._id },{password:0}, (err, lawyer) => {
+  .post(firebaseAuthCheck.authLawyer, (req, res, next) => {
+    Lawyer.findOne({ email: req.uid.email },{password:0}, (err, lawyer) => {
       if (err) return next(err);
       if (req.body.name) lawyer.name = req.body.name;
       if (req.body.email) lawyer.email = req.body.email;
@@ -78,8 +77,8 @@ router.route('/profile')
     });
   });
 
-    router.get('/cases', checkJWT, (req, res, next) => {
-    Case.find({lawyerRequests: req.decoded.lawyer._id})
+    router.get('/cases', firebaseAuthCheck.authLawyer, (req, res, next) => {
+    Case.find({lawyerRequests: req.uid.email})
       .populate('User','email name mobile')
       .exec((err, cases) => {
         if (err) {
@@ -97,8 +96,8 @@ router.route('/profile')
       });
   });
 
-  router.get('/acceptedcases', checkJWT, (req, res, next) => {
-    Case.find({ lockedlawyer: req.decoded.lawyer._id })
+  router.get('/acceptedcases', firebaseAuthCheck.authLawyer, (req, res, next) => {
+    Case.find({ lockedlawyer: req.uid.email })
       .populate('User','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
@@ -116,8 +115,8 @@ router.route('/profile')
       });
   });
 
-  router.get('/rejectedcases', checkJWT, (req, res, next) => {
-    Case.find({ locked: true,lawyerRequests: req.decoded.lawyer._id })
+  router.get('/rejectedcases', firebaseAuthCheck.authLawyer, (req, res, next) => {
+    Case.find({ locked: true,lawyerRequests: req.uid.email })
       .populate('User','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
@@ -126,7 +125,7 @@ router.route('/profile')
             message: "Couldn't find your Cases"
           });
         } else {
-          cases=cases.filter((b)=>b.lockedlawyer!=req.decoded.lawyer._id)
+          cases=cases.filter((b)=>b.lockedlawyer!=req.uid.email)
           res.json({
             success: true,
             message: 'Found your Cases',
@@ -136,8 +135,8 @@ router.route('/profile')
       });
   });
 
-  router.get('/pendingcases', checkJWT, (req, res, next) => {
-    Case.find({ locked: false ,lawyerRequests: req.decoded.lawyer._id})
+  router.get('/pendingcases', firebaseAuthCheck.authLawyer, (req, res, next) => {
+    Case.find({ locked: false ,lawyerRequests: req.uid.email})
       .populate('User','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
@@ -146,7 +145,7 @@ router.route('/profile')
             message: "Couldn't find your Cases"
           });
         } else {
-          cases=cases.filter((b)=>b.lockedlawyer!=req.decoded.lawyer._id)
+          cases=cases.filter((b)=>b.lockedlawyer!=req.uid.email)
           res.json({
             success: true,
             message: 'Found your Cases',
@@ -156,7 +155,7 @@ router.route('/profile')
       });
   });
 
-  router.post('/apply/:id',checkJWT, (req, res, next) => {
+  router.post('/apply/:id',firebaseAuthCheck.authLawyer, (req, res, next) => {
     Case.findOne({ _id: req.params.id })
       .exec((err, cases) => {
         if (err) {
@@ -166,16 +165,16 @@ router.route('/profile')
             message: "Couldn't find the Cases"
           });
         }else{
-          // cases.lockedlawyer=req.decoded.lawyer._id ;
+          // cases.lockedlawyer=req.uid.email ;
           // cases.locked=true;
 
-          if(cases.lawyerRequests.includes(req.decoded.lawyer._id)){
+          if(cases.lawyerRequests.includes(req.uid.email)){
             res.json({
               success: false,
               message: "You Have Already Applied !!"
             });
           }else{
-            cases.lawyerRequests=cases.lawyerRequests.concat(req.decoded.lawyer._id) ;
+            cases.lawyerRequests=cases.lawyerRequests.concat(req.uid.email) ;
             cases.save();
             res.json({
               success: true,
@@ -197,7 +196,8 @@ router.route('/profile')
         if (err) {
           res.json({
             success: false,
-            message: "Couldn't find your Cases"
+            message: "Couldn't find your Cases",
+            err:err.message
           });
         } else {
           res.json({
@@ -209,7 +209,7 @@ router.route('/profile')
       });
   });
   
-  // router.get('/cases/:id', checkJWT, (req, res, next) => {
+  // router.get('/cases/:id', firebaseAuthCheck.authLawyer, (req, res, next) => {
   //   Case.findOne({ _id: req.params.id })
   //     .populate('User')
   //     .exec((err, cases) => {
@@ -229,7 +229,7 @@ router.route('/profile')
   // });
 
 router.route('/userprofiledetail/:user')
-  .get(checkJWT, (req, res, next) => {
+  .get(firebaseAuthCheck.authLawyer, (req, res, next) => {
     User.findOne({ _id: req.params.user },{password:0}, (err, user) => {
       res.json({
         success: true,
