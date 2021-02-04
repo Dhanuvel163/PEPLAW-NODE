@@ -6,7 +6,6 @@ const Case = require('../models/case');
 const Lawyer = require('../models/lawyer');
 
 const config = require('../config');
-const checkJWT = require('../middlewares/check-jwtuser');
 const firebaseAuthCheck = require('../firebase/authcheck')
 
 router.post('/createUser',firebaseAuthCheck.authUser, (req, res, next) => {
@@ -43,8 +42,8 @@ router.post('/createUser',firebaseAuthCheck.authUser, (req, res, next) => {
 
 
 router.route('/profile')
-  .get(checkJWT, (req, res, next) => {
-    User.findOne({ _id: req.decoded.user._id },{password:0}, (err, user) => {
+  .get(firebaseAuthCheck.authUser, (req, res, next) => {
+    User.findOne({ email: req.uid.email },{password:0}, (err, user) => {
       res.json({
         success: true,
         user: user,
@@ -52,8 +51,8 @@ router.route('/profile')
       });
     });
   })
-  .post(checkJWT, (req, res, next) => {
-    User.findOne({ _id: req.decoded.user._id },{password:0}, (err, user) => {
+  .post(firebaseAuthCheck.authUser, (req, res, next) => {
+    User.findOne({ email: req.uid.email },{password:0}, (err, user) => {
       if (err) return next(err);
 
       if (req.body.name) user.name = req.body.name;
@@ -75,34 +74,69 @@ router.route('/profile')
     });
   });
 
-  router.get('/cases', checkJWT, (req, res, next) => {
-    Case.find({ User: req.decoded.user._id })
-    .populate('lawyerRequests','email name mobile _id')
-      .exec((err, cases) => {
-        if (err) {
-          res.json({
-            success: false,
-            message: "Couldn't find your Cases"
-          });
+  router.route('/cases')
+    .get(firebaseAuthCheck.authUser, (req, res, next) => {
+      Case.find({ User: req.uid.email })
+      .populate('lawyerRequests','email name mobile _id')
+        .exec((err, cases) => {
+          if (err) {
+            res.json({
+              success: false,
+              message: "Couldn't find your Cases"
+            });
+          } else {
+            res.json({
+              success: true,
+              message: 'Found your Cases',
+              cases: cases
+            });
+          }
+        });
+    })
+    .post(firebaseAuthCheck.authUser, (req, res, next) => {
+      let newcase = new Case();
+      newcase.User=req.uid.email;
+      newcase.dispositioncode = req.body.dcode;
+      newcase.dispositiondate = req.body.ddate;
+      newcase.sentencetime = req.body.stime;
+      newcase.amendedcharge = req.body.acharge;
+      newcase.description = req.body.desc;
+
+      Case.findOne({ dispositioncode: req.body.dcode }, (err, findcase) => {
+        if (err) throw err;
+        if (!findcase) {
+          try{
+            newcase.save()
+            res.json({
+              success: true,
+              message: 'Added succesfully',
+              case:newcase
+            });
+          }catch(e){
+            console.log(e)
+            res.json({
+              success: false,
+              message: e.message,
+            });      
+          }
         } else {
           res.json({
-            success: true,
-            message: 'Found your Cases',
-            cases: cases
+            success: false,
+            message: 'Case with disposition code already exist'
           });
         }
       });
-  });
+    });
 
-  router.get('/pendingcases', checkJWT, (req, res, next) => {
-    Case.find({ User: req.decoded.user._id,locked:false })
+  router.get('/pendingcases', firebaseAuthCheck.authUser, (req, res, next) => {
+    Case.find({ User: req.uid.email,locked:false })
     .populate('lawyerRequests','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
-          res.json({
-            success: false,
-            message: "Couldn't find your Cases"
-          });
+            res.json({
+              success: false,
+              message: "Couldn't find your Cases"
+            });
         } else {
           res.json({
             success: true,
@@ -113,16 +147,16 @@ router.route('/profile')
       });
   }); 
 
-  router.get('/acceptedcases', checkJWT, (req, res, next) => {
-    Case.find({ locked:true })
+  router.get('/acceptedcases', firebaseAuthCheck.authUser, (req, res, next) => {
+    Case.find({ User: req.uid.email,locked:true })
     .populate('lockedlawyer','email name mobile _id')
     .populate('lawyerRequests','email name mobile')
       .exec((err, cases) => {
         if (err) {
-          res.json({
-            success: false,
-            message: "Couldn't find your Cases"
-          });
+            res.json({
+              success: false,
+              message: "Couldn't find your Cases"
+            });
         } else {
           res.json({
             success: true,
@@ -133,8 +167,8 @@ router.route('/profile')
       });
   });
 
-  router.post('/accept/:case/:lawyer', checkJWT, (req, res, next) => {
-    Case.findOne({locked:false,_id:req.params.case,User: req.decoded.user._id})
+  router.post('/accept/:case/:lawyer', firebaseAuthCheck.authUser, (req, res, next) => {
+    Case.findOne({locked:false,_id:req.params.case,User: req.uid.email})
     .populate('lawyerRequests','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
@@ -172,48 +206,7 @@ router.route('/profile')
       });
   });
 
-
-  router.post('/cases', checkJWT, (req, res, next) => {
-    let newcase = new Case();
-    newcase.User=req.decoded.user._id;
-    newcase.dispositioncode = req.body.dcode;
-    newcase.dispositiondate = req.body.ddate;
-    newcase.sentencetime = req.body.stime;
-    newcase.amendedcharge = req.body.acharge;
-    newcase.description = req.body.desc;
-
-    Case.findOne({ dispositioncode: req.body.dcode }, (err, findcase) => {
-      if (err) throw err;
-      if (!findcase) {
-        try{
-          newcase.save()
-          res.json({
-            success: true,
-            message: 'Added succesfully',
-            case:newcase
-          });
-        }catch(e){
-          console.log(e)
-          res.json({
-            success: false,
-            message: e.message,
-          });      
-        }
-      } else {
-        res.json({
-          success: false,
-          message: 'Case with disposition code already exist'
-        });
-      }
-
-  });
-
-
-
-
-  });
-
-  // router.get('/cases/:id', checkJWT, (req, res, next) => {
+  // router.get('/cases/:id', firebaseAuthCheck.authUser, (req, res, next) => {
   //   Case.findOne({ _id: req.params.id })
   //     .populate('User')
   //     .exec((err, cases) => {
@@ -232,7 +225,7 @@ router.route('/profile')
   //     });
   // });
 
-  router.get('/alllawyers', checkJWT, (req, res, next) => {
+  router.get('/alllawyers', firebaseAuthCheck.authUser, (req, res, next) => {
     Lawyer.find()
       .exec((err, lawyers) => {
         if (err) {
@@ -251,7 +244,7 @@ router.route('/profile')
   });
   
 router.route('/lawyerprofiledetail/:lawyer')
-  .get(checkJWT, (req, res, next) => {
+  .get(firebaseAuthCheck.authUser, (req, res, next) => {
     Lawyer.findOne({ _id: req.params.lawyer },{password:0}, (err, lawyer) => {
       res.json({
         success: true,
