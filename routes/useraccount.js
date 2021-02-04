@@ -76,7 +76,7 @@ router.route('/profile')
 
   router.route('/cases')
     .get(firebaseAuthCheck.authUser, (req, res, next) => {
-      Case.find({ User: req.uid.email })
+      Case.find({ virtualUser: req.uid.email })
       .populate('lawyerRequests','email name mobile _id')
         .exec((err, cases) => {
           if (err) {
@@ -95,7 +95,7 @@ router.route('/profile')
     })
     .post(firebaseAuthCheck.authUser, (req, res, next) => {
       let newcase = new Case();
-      newcase.User=req.uid.email;
+      newcase.virtualUser=req.uid.email;
       newcase.dispositioncode = req.body.dcode;
       newcase.dispositiondate = req.body.ddate;
       newcase.sentencetime = req.body.stime;
@@ -107,11 +107,22 @@ router.route('/profile')
         if (!findcase) {
           try{
             newcase.save()
-            res.json({
-              success: true,
-              message: 'Added succesfully',
-              case:newcase
-            });
+            newcase.populate('lawyerRequests','email name mobile _id')
+            .execPopulate()
+            .then((cas)=>{
+              res.json({
+                success: true,
+                message: 'Added succesfully',
+                case:cas
+              });
+            })
+            .catch((e)=>{
+              res.json({
+                success: false,
+                message: e.message,
+              });              
+            })
+            
           }catch(e){
             console.log(e)
             res.json({
@@ -129,7 +140,7 @@ router.route('/profile')
     });
 
   router.get('/pendingcases', firebaseAuthCheck.authUser, (req, res, next) => {
-    Case.find({ User: req.uid.email,locked:false })
+    Case.find({ virtualUser: req.uid.email,locked:false })
     .populate('lawyerRequests','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
@@ -148,7 +159,7 @@ router.route('/profile')
   }); 
 
   router.get('/acceptedcases', firebaseAuthCheck.authUser, (req, res, next) => {
-    Case.find({ User: req.uid.email,locked:true })
+    Case.find({ virtualUser: req.uid.email,locked:true })
     .populate('lockedlawyer','email name mobile _id')
     .populate('lawyerRequests','email name mobile')
       .exec((err, cases) => {
@@ -168,7 +179,7 @@ router.route('/profile')
   });
 
   router.post('/accept/:case/:lawyer', firebaseAuthCheck.authUser, (req, res, next) => {
-    Case.findOne({locked:false,_id:req.params.case,User: req.uid.email})
+    Case.findOne({locked:false,_id:req.params.case,virtualUser: req.uid.email})
     .populate('lawyerRequests','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
@@ -177,31 +188,24 @@ router.route('/profile')
             message: "You are not authorized to update or case is already accepted"
           });
         } else {
-          cases.lockedlawyer = req.params.lawyer
+          cases.virtuallockedlawyer = req.params.lawyer
           cases.locked = true
           cases.save()
-
-          Lawyer.findById(req.params.lawyer)
-          .exec((err,lawyer)=>{
-            if(err){
+          cases.populate('lockedlawyer')
+          .execPopulate()
+          .then((cas)=>{
+            res.json({
+              success: true,
+              message: 'Accepted',
+              cases: cas
+            });
+          })
+          .catch(()=>{
               res.json({
                 success: false,
                 message: "Something Went Wrong"
               }); 
-            }else{
-              cases.lockedlawyer = {
-                name :lawyer.name,
-                email :lawyer.email,
-                mobile :lawyer.mobile
-              }
-            }
           })
-          
-          res.json({
-            success: true,
-            message: 'Accepted',
-            cases: cases
-          });
         }
       });
   });

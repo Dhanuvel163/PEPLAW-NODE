@@ -78,7 +78,7 @@ router.route('/profile')
   });
 
     router.get('/cases', firebaseAuthCheck.authLawyer, (req, res, next) => {
-    Case.find({lawyerRequests: req.uid.email})
+    Case.find({virtuallawyerRequests: req.uid.email})
       .populate('User','email name mobile')
       .exec((err, cases) => {
         if (err) {
@@ -97,7 +97,7 @@ router.route('/profile')
   });
 
   router.get('/acceptedcases', firebaseAuthCheck.authLawyer, (req, res, next) => {
-    Case.find({ lockedlawyer: req.uid.email })
+    Case.find({ virtuallockedlawyer: req.uid.email })
       .populate('User','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
@@ -116,7 +116,7 @@ router.route('/profile')
   });
 
   router.get('/rejectedcases', firebaseAuthCheck.authLawyer, (req, res, next) => {
-    Case.find({ locked: true,lawyerRequests: req.uid.email })
+    Case.find({ locked: true,virtuallawyerRequests: req.uid.email })
       .populate('User','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
@@ -125,7 +125,7 @@ router.route('/profile')
             message: "Couldn't find your Cases"
           });
         } else {
-          cases=cases.filter((b)=>b.lockedlawyer!=req.uid.email)
+          cases=cases.filter((b)=>b.virtuallockedlawyer!=req.uid.email)
           res.json({
             success: true,
             message: 'Found your Cases',
@@ -136,7 +136,7 @@ router.route('/profile')
   });
 
   router.get('/pendingcases', firebaseAuthCheck.authLawyer, (req, res, next) => {
-    Case.find({ locked: false ,lawyerRequests: req.uid.email})
+    Case.find({ locked: false ,virtuallawyerRequests: req.uid.email})
       .populate('User','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
@@ -157,6 +157,7 @@ router.route('/profile')
 
   router.post('/apply/:id',firebaseAuthCheck.authLawyer, (req, res, next) => {
     Case.findOne({ _id: req.params.id })
+      .populate('User','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
           console.log(err)
@@ -168,13 +169,13 @@ router.route('/profile')
           // cases.lockedlawyer=req.uid.email ;
           // cases.locked=true;
 
-          if(cases.lawyerRequests.includes(req.uid.email)){
+          if(cases.virtuallawyerRequests.includes(req.uid.email)){
             res.json({
               success: false,
               message: "You Have Already Applied !!"
             });
           }else{
-            cases.lawyerRequests=cases.lawyerRequests.concat(req.uid.email) ;
+            cases.virtuallawyerRequests=cases.virtuallawyerRequests.concat(req.uid.email) ;
             cases.save();
             res.json({
               success: true,
@@ -191,6 +192,8 @@ router.route('/profile')
 
   router.get('/allcases', (req, res, next) => {
     Case.find({ locked:false})
+      // .populate('User','name email mobile _id')
+      // .populate([{path:'User',model:'User',select:'name email mobile _id',match: { email: 1 }}])
       .populate('User','name email mobile _id')
       .exec((err, cases) => {
         if (err) {
