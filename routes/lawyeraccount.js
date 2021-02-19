@@ -7,6 +7,11 @@ const Case = require('../models/case');
 const config = require('../config');
 const firebaseAuthCheck = require('../firebase/authcheck')
 
+function RemoveEmptyString(array){
+  let reducedArray = array.filter((a)=>(a.trim() !== '' && a.trim() !== ' '))
+  return reducedArray
+}
+
 router.post('/createLawyer',firebaseAuthCheck.authLawyer, (req, res, next) => {
  let lawyer = new Lawyer();
  lawyer.name = req.body.name;
@@ -58,6 +63,14 @@ router.route('/profile')
       if (req.body.mobile) lawyer.mobile = req.body.mobile;
       if (req.body.country) lawyer.country = req.body.country;
       if (req.body.city) lawyer.city = req.body.city;
+
+      if (req.body.experience) lawyer.experience = req.body.experience;
+      if (req.body.j_practice_location) lawyer.j_practice_location = req.body.j_practice_location;
+      if (req.body.biography) lawyer.biography = req.body.biography;
+      if (req.body.practice_areas) lawyer.practice_areas = RemoveEmptyString(req.body.practice_areas);
+      if (req.body.languages) lawyer.languages = RemoveEmptyString(req.body.languages);
+      if (req.body.education) lawyer.education = RemoveEmptyString(req.body.education);
+      if (req.body.p_associations) lawyer.p_associations = RemoveEmptyString(req.body.p_associations);
 
       if (req.body.addr1) lawyer.address.addr1 = req.body.addr1;
       if (req.body.addr2) lawyer.address.addr2 = req.body.addr2;

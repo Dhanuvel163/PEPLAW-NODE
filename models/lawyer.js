@@ -12,6 +12,14 @@ const LawyerSchema = new Schema({
   mobile:String,
   country:String,
   city:String,
+  
+  experience:String,
+  j_practice_location:String,
+  biography:String,
+  practice_areas:[{type:String}],
+  languages:[{type:String}],
+  education:[{type:String}],
+  p_associations:[{type:String}],
 
   address: {
     addr1: String,
