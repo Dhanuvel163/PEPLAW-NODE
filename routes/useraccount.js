@@ -78,6 +78,7 @@ router.route('/profile')
     .get(firebaseAuthCheck.authUser, (req, res, next) => {
       Case.find({ virtualUser: req.uid.email })
       .populate('lawyerRequests','email name mobile _id')
+      .populate('lockedlawyer','email name mobile _id')
         .exec((err, cases) => {
           if (err) {
             res.json({
@@ -108,6 +109,7 @@ router.route('/profile')
           try{
             newcase.save()
             newcase.populate('lawyerRequests','email name mobile _id')
+            newcase.populate('lockedlawyer','email name mobile _id')
             .execPopulate()
             .then((cas)=>{
               res.json({
@@ -141,6 +143,7 @@ router.route('/profile')
 
   router.get('/pendingcases', firebaseAuthCheck.authUser, (req, res, next) => {
     Case.find({ virtualUser: req.uid.email,locked:false })
+    .populate('lockedlawyer','email name mobile _id')
     .populate('lawyerRequests','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
@@ -180,6 +183,7 @@ router.route('/profile')
 
   router.post('/accept/:case/:lawyer', firebaseAuthCheck.authUser, (req, res, next) => {
     Case.findOne({locked:false,_id:req.params.case,virtualUser: req.uid.email})
+    .populate('lockedlawyer','email name mobile _id')
     .populate('lawyerRequests','email name mobile _id')
       .exec((err, cases) => {
         if (err) {
