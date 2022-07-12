@@ -3,3 +3,4 @@ module.exports = {
   port: 3030,
   secret: process.env.SECRET,
 };
+//UPDATED
